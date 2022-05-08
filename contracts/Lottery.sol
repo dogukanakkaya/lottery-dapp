@@ -16,6 +16,11 @@ contract Lottery is Ownable {
     AggregatorV3Interface ethUsdPriceFeed;
     uint256 entranceFee = 1 * 10**18; // in usd with 18 decimals
 
+    modifier mustBeStarted {
+        require(state == State.STARTED, "Lottery is not started yet!");
+        _;
+    }
+
     constructor() {
         ethUsdPriceFeed = AggregatorV3Interface(0x8A753747A1Fa494EC906cE90E9f37563A8AF630e);
     }
@@ -25,8 +30,15 @@ contract Lottery is Ownable {
         state = State.STARTED;
     }
 
-    function close() public {
-        require(state == State.STARTED, "Lottery is not started yet!");
+    function enter() public mustBeStarted {
+
+    }
+
+    function findWinner() public view onlyOwner returns(string memory) {
+        return "hi i am winner";
+    }
+
+    function close() public mustBeStarted {
         state = State.CLOSED;
     }
 
@@ -36,7 +48,7 @@ contract Lottery is Ownable {
         return uint256(price) * 10**10; // convert to 18 decimals
     }
 
-    function findWinner() public view onlyOwner returns(string memory) {
-        return "hi i am winner";
+    function getEntranceFee() private view returns(uint256) {
+        return (entranceFee * 10**18) / getPrice();
     }
 }
