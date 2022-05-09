@@ -36,7 +36,7 @@ contract Lottery is Ownable {
     }
 
     function enter(string memory _username) public payable mustBeStarted {
-        require(msg.value >= entranceFee, "You don't have enough funds!");
+        require(msg.value >= getEntranceFee(), "You don't have enough funds!");
         players.push(Player(_username, payable(msg.sender)));
     }
 
@@ -46,6 +46,10 @@ contract Lottery is Ownable {
 
     function close() public mustBeStarted {
         state = State.CLOSED;
+    }
+
+    function getState() public view returns(State) {
+        return state;
     }
 
     function getPrice() private view returns(uint256) {
