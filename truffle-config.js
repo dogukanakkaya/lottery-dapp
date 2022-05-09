@@ -19,7 +19,7 @@
  */
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
-const { PRIVATE_KEY, INFURA_KEY } = require('./secrets');
+const { PRIVATE_KEY, INFURA_KEY } = require('./config');
 
 module.exports = {
   /**
