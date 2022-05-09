@@ -6,12 +6,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract Lottery is Ownable {
+    struct Player {
+        string username;
+        address payable _address;
+    }
     enum State {
         STARTED,
         CLOSED,
         FINDING_WINNER
     }
 
+    Player[] private players;
     State state = State.CLOSED;
     AggregatorV3Interface ethUsdPriceFeed;
     uint256 entranceFee = 1 * 10**18; // in usd with 18 decimals
@@ -30,8 +35,9 @@ contract Lottery is Ownable {
         state = State.STARTED;
     }
 
-    function enter() public mustBeStarted {
-
+    function enter(string memory _username) public payable mustBeStarted {
+        require(msg.value >= entranceFee, "You don't have enough funds!");
+        players.push(Player(_username, payable(msg.sender)));
     }
 
     function findWinner() public view onlyOwner returns(string memory) {
