@@ -9,12 +9,14 @@ contract('Lottery', accounts => {
         assert.equal(state.toNumber(), 0);
     });
 
-    it('should add new player', async () => {
-        const lottery = await Lottery.deployed();
+    if (config.network !== 'development') {
+        it('should add new player', async () => {
+            const lottery = await Lottery.deployed();
 
-        const enter = await lottery.enter("dogukan", { from: accounts[0], value: web3.utils.toWei('0.001', 'ether') });
-        assert.isTrue(enter.receipt.status)
-    });
+            const enter = await lottery.enter("dogukan", { from: accounts[0], value: web3.utils.toWei('0.001', 'ether') });
+            assert.isTrue(enter.receipt.status)
+        });
+    }
 
     it('should return closed(1) state', async () => {
         const lottery = await Lottery.deployed();
