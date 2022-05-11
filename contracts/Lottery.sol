@@ -15,8 +15,7 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
     enum State {
         STARTED,
         CLOSED,
-        WINNER_CALCULATING,
-        WINNER_FOUND
+        WINNER_CALCULATING
     }
 
 
@@ -27,10 +26,10 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
     bytes32 vrfKeyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
     uint32 vrfCallbackGasLimit = 100000;
     uint16 vrfRequestConfirmations = 3;
+    uint32 vrfNumWords = 1;
     uint256 vrfRequestId;
-    uint256 randomNumber;
 
-    Player[] private players;
+    Player[] public players;
     Player public winner;
     State state = State.CLOSED;
     AggregatorV3Interface ethUsdPriceFeed;
@@ -63,9 +62,8 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
         requestRandomWords();
     }
 
-    function close() public onlyOwner {
+    function close() private {
         state = State.CLOSED;
-        randomNumber = 0;
         delete players;
     }
 
@@ -90,7 +88,7 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
             vrfSubscriptionId,
             vrfRequestConfirmations,
             vrfCallbackGasLimit,
-            1
+            vrfNumWords
         );
     }
 
@@ -100,7 +98,7 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
     ) internal override {
         require(state == State.WINNER_CALCULATING);
 
-        randomNumber = randomWords[0];
+        uint256 randomNumber = randomWords[0];
 
         require(randomNumber > 0);
 
