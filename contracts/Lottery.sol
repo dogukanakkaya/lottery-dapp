@@ -18,12 +18,10 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
         WINNER_CALCULATING
     }
 
-
     // VRF
     VRFCoordinatorV2Interface COORDINATOR;
     uint64 vrfSubscriptionId;
-    address vrfCoordinator = 0x6168499c0cFfCaCD319c818142124B7A15E857ab;
-    bytes32 vrfKeyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
+    bytes32 vrfKeyHash;
     uint32 vrfCallbackGasLimit = 100000;
     uint16 vrfRequestConfirmations = 3;
     uint32 vrfNumWords = 1;
@@ -35,11 +33,23 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
     AggregatorV3Interface ethUsdPriceFeed;
     uint256 entranceFee = 1 * 10**18; // in usd with 18 decimals
 
-    constructor(uint64 _vrfSubscriptionId) VRFConsumerBaseV2(vrfCoordinator) {
-        COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
+    /**
+     * _vrfCoordinatorAddress: 0x6168499c0cFfCaCD319c818142124B7A15E857ab
+     * _vrfKeyHash: 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc
+     * _vrfSubscriptionId: 
+     * _priceFeedAddress: 0x8A753747A1Fa494EC906cE90E9f37563A8AF630e
+     */
+    constructor(
+        address _vrfCoordinatorAddress,
+        bytes32 _vrfKeyHash,
+        uint64 _vrfSubscriptionId,
+        address _priceFeedAddress
+    ) VRFConsumerBaseV2(_vrfCoordinatorAddress) {
+        COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinatorAddress);
+        vrfKeyHash = _vrfKeyHash;
         vrfSubscriptionId = _vrfSubscriptionId;
 
-        ethUsdPriceFeed = AggregatorV3Interface(0x8A753747A1Fa494EC906cE90E9f37563A8AF630e);
+        ethUsdPriceFeed = AggregatorV3Interface(_priceFeedAddress);
     }
 
     function start() public {
