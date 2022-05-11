@@ -15,7 +15,8 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
     enum State {
         STARTED,
         CLOSED,
-        FINDING_WINNER
+        WINNER_CALCULATING,
+        WINNER_FOUND
     }
 
 
@@ -29,16 +30,11 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
     uint256 vrfRequestId;
     uint256 randomNumber;
 
-
     Player[] private players;
+    Player public winner;
     State state = State.CLOSED;
     AggregatorV3Interface ethUsdPriceFeed;
     uint256 entranceFee = 1 * 10**18; // in usd with 18 decimals
-
-    modifier mustBeStarted {
-        require(state == State.STARTED, "Lottery is not started yet!");
-        _;
-    }
 
     constructor(uint64 _vrfSubscriptionId) VRFConsumerBaseV2(vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
@@ -49,20 +45,28 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
 
     function start() public {
         require(state == State.CLOSED, "Lottery is not closed yet!");
+
         state = State.STARTED;
     }
 
-    function enter(string memory _username) public payable mustBeStarted {
+    function enter(string memory _username) public payable {
+        require(state == State.STARTED, "Lottery is not started yet!");
         require(msg.value >= getEntranceFee(), "You don't have enough funds!");
+
         players.push(Player(_username, payable(msg.sender)));
     }
 
-    function findWinner() public view onlyOwner returns(string memory) {
-        return "hi winner";
+    function calculateWinner() public onlyOwner {
+        require(state == State.STARTED, "Lottery is not started yet!");
+
+        state = State.WINNER_CALCULATING;
+        requestRandomWords();
     }
 
-    function close() public mustBeStarted {
+    function close() public onlyOwner {
         state = State.CLOSED;
+        randomNumber = 0;
+        delete players;
     }
 
     function getState() public view returns(State) {
@@ -79,7 +83,7 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
         return (entranceFee * 10**18) / getPrice();
     }
 
-    function requestRandomWords() public {
+    function requestRandomWords() private {
         // Will revert if subscription is not set and funded.
         vrfRequestId = COORDINATOR.requestRandomWords(
             vrfKeyHash,
@@ -94,10 +98,15 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
         uint256, /* requestId */
         uint256[] memory randomWords
     ) internal override {
-        randomNumber = randomWords[0];
-    }
+        require(state == State.WINNER_CALCULATING);
 
-    function getRandomNumber() public view returns(uint256) {
-        return randomNumber;
+        randomNumber = randomWords[0];
+
+        require(randomNumber > 0);
+
+        winner = players[randomNumber % players.length];
+        winner._address.transfer(address(this).balance);
+
+        close();
     }
 }
