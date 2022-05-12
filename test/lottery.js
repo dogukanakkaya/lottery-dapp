@@ -1,11 +1,13 @@
 const Lottery = artifacts.require('Lottery');
+const VRFCoordinatorV2Mock = artifacts.require('VRFCoordinatorV2Mock');
 
 contract('Lottery', accounts => {
     let lottery;
+    let vrfCoordinatorV2Mock;
 
     before(async () => {
         lottery = await Lottery.deployed();
-        // lottery = await Lottery.at('0x7ea00526db7d121c2dafbfdd5f2e41fb5e1b5350');
+        vrfCoordinatorV2Mock = await VRFCoordinatorV2Mock.deployed();
     })
 
     it('should return start(0) state', async () => {
@@ -15,18 +17,20 @@ contract('Lottery', accounts => {
         assert.equal(state.toNumber(), 0);
     });
 
-    if (config.network !== 'development') {
-        // todo: deploy mocks for this one
-        it('should add new player', async () => {
-            const enter = await lottery.enter("dogukan", { from: accounts[0], value: web3.utils.toWei('0.001', 'ether') });
-            assert.isTrue(enter.receipt.status)
-        });
-    }
+    it('should add new player', async () => {
+        const playerTransactions = [
+            await lottery.enter("dogukan", { from: accounts[0], value: web3.utils.toWei('0.001', 'ether') }),
+            await lottery.enter("nobody", { from: accounts[0], value: web3.utils.toWei('0.001', 'ether') })
+        ];
 
-    it('should return closed(1) state', async () => {
-        await lottery.close();
+        assert.isTrue(playerTransactions.every(tx => tx.receipt.status))
+    });
 
-        const state = await lottery.getState();
-        assert.equal(state.toNumber(), 1);
+    // todo: vrf mock not working, fix it
+    it('should calculate winner', async () => {
+        await vrfCoordinatorV2Mock.createSubscription();
+        const calculateWinner = await lottery.calculateWinner();
+
+        console.log(calculateWinner);
     });
 });
