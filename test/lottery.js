@@ -29,33 +29,11 @@ contract('Lottery', accounts => {
     });
 
     it('should calculate winner', async () => {
-        const onWinnerCalculated = () => {
-            return new Promise(resolve => {
-                lottery.WinnerCalculated().on('data', resolve);
-            });
-        }
+        const subscriptionTx = await vrfCoordinatorV2Mock.createSubscription();
+        const subId = subscriptionTx.logs[0].args.subId;
 
-        const createSubscription = () => {
-            return new Promise(async resolve => {
-                vrfCoordinatorV2Mock.SubscriptionCreated().on('data', async event => {
-                    const { subId } = event.returnValues;
-
-                    resolve(subId);
-                });
-
-                await vrfCoordinatorV2Mock.createSubscription();
-            });
-        }
-
-        const fundSubscription = subId => {
-            return new Promise(async resolve => {
-                vrfCoordinatorV2Mock.SubscriptionFunded().on('data', resolve);
-
-                await vrfCoordinatorV2Mock.fundSubscription(subId, web3.utils.toWei('1', 'ether'));
-
-                resolve(true);
-            });
-        }
+        // we have to fund the subscription to be able to request random words
+        await vrfCoordinatorV2Mock.fundSubscription(subId, web3.utils.toWei('1', 'ether'));
 
         const calculateWinner = () => {
             return new Promise(async resolve => {
@@ -71,14 +49,12 @@ contract('Lottery', accounts => {
             });
         }
 
-        onWinnerCalculated().then((event) => {
+        lottery.WinnerCalculated().on('data', event => {
             const { winner } = event.returnValues;
 
             assert.oneOf(winner._address, [accounts[0], accounts[1]]);
         });
 
-        const subId = await createSubscription();
-        await fundSubscription(subId);
         await calculateWinner();
     });
 });
