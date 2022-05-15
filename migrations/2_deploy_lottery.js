@@ -4,12 +4,11 @@ const MockV3Aggregator = artifacts.require('MockV3Aggregator');
 const { VRF_SUBSCRIPTION_ID } = require('../config');
 
 const deployMocks = (deployer) => {
-  // deploy mocks if network is development
   return Promise.all([
     deployer.deploy(
       VRFCoordinatorV2Mock,
-      10000000,
-      10000000
+      100000,
+      100000
     ),
     deployer.deploy(
       MockV3Aggregator,
