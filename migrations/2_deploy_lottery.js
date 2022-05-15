@@ -1,21 +1,35 @@
 const Lottery = artifacts.require("Lottery");
 const VRFCoordinatorV2Mock = artifacts.require('VRFCoordinatorV2Mock');
+const MockV3Aggregator = artifacts.require('MockV3Aggregator');
 const { VRF_SUBSCRIPTION_ID } = require('../config');
 
-module.exports = function (deployer) {
-  let vrfCoordinatorAddress, vrfKeyHash, vrfSubscriptionId, priceFeedAddress;
-
-  if (config.network === 'development') {
-    vrfCoordinatorAddress = VRFCoordinatorV2Mock.address;
-    vrfKeyHash = '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc';
-    vrfSubscriptionId = 1;
-    priceFeedAddress = '0x8A753747A1Fa494EC906cE90E9f37563A8AF630e';
-
+const deployMocks = (deployer) => {
+  // deploy mocks if network is development
+  return Promise.all([
     deployer.deploy(
       VRFCoordinatorV2Mock,
       10000000,
       10000000
-    );
+    ),
+    deployer.deploy(
+      MockV3Aggregator,
+      18,
+      207810000000
+    )
+  ]);
+}
+
+module.exports = async function (deployer) {
+  let vrfCoordinatorAddress, vrfKeyHash, vrfSubscriptionId, priceFeedAddress;
+
+  if (config.network === 'development') {
+    // deploy mocks if network is development
+    await deployMocks(deployer);
+
+    vrfCoordinatorAddress = VRFCoordinatorV2Mock.address;
+    vrfKeyHash = '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc';
+    vrfSubscriptionId = 1;
+    priceFeedAddress = MockV3Aggregator.address;
   } else {
     vrfCoordinatorAddress = '0x6168499c0cFfCaCD319c818142124B7A15E857ab';
     vrfKeyHash = '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc';
@@ -23,7 +37,7 @@ module.exports = function (deployer) {
     priceFeedAddress = '0x8A753747A1Fa494EC906cE90E9f37563A8AF630e';
   }
 
-  deployer.deploy(
+  await deployer.deploy(
     Lottery,
     vrfCoordinatorAddress,
     vrfKeyHash,

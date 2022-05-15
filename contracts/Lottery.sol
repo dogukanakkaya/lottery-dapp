@@ -61,9 +61,7 @@ contract Lottery is Ownable, VRFConsumerBaseV2 {
 
     function enter(string memory _username) public payable {
         require(state == State.STARTED, "Lottery is not started yet!");
-        // require(msg.value >= getEntranceFee(), "You don't have enough funds!");
-        // temporary until i mock v0.8.0 of the aggregator
-        require(msg.value >= 100000, "You don't have enough funds!");
+        require(msg.value >= getEntranceFee(), "You don't have enough funds!");
 
         players.push(Player(_username, payable(msg.sender)));
     }

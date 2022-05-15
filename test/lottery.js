@@ -1,19 +1,21 @@
 const Lottery = artifacts.require('Lottery');
 const VRFCoordinatorV2Mock = artifacts.require('VRFCoordinatorV2Mock');
+const MockV3Aggregator = artifacts.require('MockV3Aggregator');
 
 contract('Lottery', accounts => {
     let lottery;
     let vrfCoordinatorV2Mock;
 
     before(async () => {
-        lottery = await Lottery.deployed();
         vrfCoordinatorV2Mock = await VRFCoordinatorV2Mock.deployed();
+        await MockV3Aggregator.deployed();
+        lottery = await Lottery.deployed();
     })
 
     it('should return start(0) state', async () => {
         await lottery.start();
-
         const state = await lottery.getState();
+
         assert.equal(state.toNumber(), 0);
     });
 
@@ -31,6 +33,6 @@ contract('Lottery', accounts => {
         await vrfCoordinatorV2Mock.createSubscription();
         const calculateWinner = await lottery.calculateWinner();
 
-        console.log(calculateWinner);
+        //console.log(calculateWinner);
     });
 });
